@@ -2,7 +2,7 @@
 
 Implements the Petroglyph v1.0 meg archive file type in `C#`.
 
-Special thanks to @MikeLankamp for decoding the files and hosting them on [Petrolution](http://modtools.petrolution.net/docs/MegFileFormat).
+Special thanks to [@MikeLankamp](https://github.com/MikeLankamp) for decoding the files and hosting them on [Petrolution](http://modtools.petrolution.net/docs/MegFileFormat).
 
 ## Introduction
 
