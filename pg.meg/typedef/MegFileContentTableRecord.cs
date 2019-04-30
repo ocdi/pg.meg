@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using pg.util.interfaces;
+[assembly: InternalsVisibleTo("pg.meg.test")]
 
 namespace pg.meg.typedef
 {
-    public class MegFileContentTableRecord : IBinaryFile
+    internal sealed class MegFileContentTableRecord : IBinaryFile
     {
         private readonly uint _crc32;
         private readonly uint _fileTableRecordIndex;

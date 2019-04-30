@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
+using pg.meg.builder.attributes;
 using pg.meg.exceptions;
 using pg.meg.typedef;
 using pg.util.interfaces;
+[assembly: InternalsVisibleTo("pg.meg.test")]
 
 namespace pg.meg.builder
 {
-    public class MegFileBinaryFileBuilder : IBinaryFileBuilder<MegFile>
+    internal sealed class MegFileBinaryFileBuilder : IBinaryFileBuilder<MegFile, MegFileAttribute>
     {
         private const int HEADER_STARTING_OFFSET = 0;
         private const int HEADER_NUMBER_OF_FILES_OFFSET = 4;
@@ -24,11 +27,10 @@ namespace pg.meg.builder
             MegHeader header = BuildMegHeader(megFileBytes);
             MegFileNameTable megFileNameTable = BuildFileNameTable(megFileBytes);
             MegFileContentTable megFileContentTable = BuildFileContentTable(megFileBytes);
-            MegFileByteContent megFileByteContent = BuildMegFileByteContentHolder(megFileBytes, megFileNameTable, megFileContentTable);
-            return new MegFile(header, megFileNameTable, megFileContentTable, megFileByteContent);
+            return new MegFile(header, megFileNameTable, megFileContentTable);
         }
 
-        public byte[] Build(object payload)
+        public MegFile Build(MegFileAttribute attribute)
         {
             throw new NotImplementedException();
         }
@@ -42,7 +44,6 @@ namespace pg.meg.builder
                 throw new MegFileMalformedException(
                     $"The number of file names has to be identical to the number of files. File names: {numFileNames} Number of files: {numFiles}.");
             }
-
             _numberOfFiles = numFiles;
             return new MegHeader(numFileNames, numFiles);
         }
@@ -86,24 +87,6 @@ namespace pg.meg.builder
             }
 
             return new MegFileContentTable(megFileContentTableRecords);
-        }
-
-        private MegFileByteContent BuildMegFileByteContentHolder(IReadOnlyList<byte> megFileBytes,
-            MegFileNameTable megFileNameTable, MegFileContentTable megFileContentTable)
-        {
-            List<FileHolder> files = new List<FileHolder>();
-            for (uint i = 0; i < _numberOfFiles; i++)
-            {
-                List<byte> fileContent = new List<byte>();
-                for (uint j = megFileContentTable.MegFileContentTableRecords[Convert.ToInt32(i)].FileStartOffsetInBytes;
-                    j < megFileContentTable.MegFileContentTableRecords[Convert.ToInt32(i)].FileStartOffsetInBytes + megFileContentTable.MegFileContentTableRecords[Convert.ToInt32(i)].FileSizeInBytes;
-                    j++)
-                {
-                    fileContent.Add(megFileBytes[Convert.ToInt32(j)]);
-                }
-                files.Add(new FileHolder(megFileNameTable.MegFileNameTableRecords[Convert.ToInt32(i)].FileName, fileContent.ToArray()));
-            }
-            return new MegFileByteContent(files);
         }
     }
 }

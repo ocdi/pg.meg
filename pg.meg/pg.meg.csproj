@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\pg.util\pg.util\pg.util.csproj" />
+    <ProjectReference Include="..\pg.utils\pg.util\pg.util.csproj" />
   </ItemGroup>
 
 </Project>
