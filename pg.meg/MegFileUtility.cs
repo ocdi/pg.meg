@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using pg.meg.service;
+using pg.meg.typedef;
 
 [assembly: InternalsVisibleTo("pg.meg.test")]
 
@@ -31,7 +33,7 @@ namespace pg.meg
         /// <param name="targetDirectory">The path to the directory the meg file should be unpacked to.</param>
         public static void UnpackMegFile(string megFilePath, string targetDirectory)
         {
-            throw new NotImplementedException();
+            MegFileUnpackService.UnpackMegFile(megFilePath, targetDirectory);
         }
 
         internal static uint GetContainedFileCount(string megFilePath)
@@ -49,20 +51,21 @@ namespace pg.meg
             uint headerSize = 0;
             using (BinaryReader reader = new BinaryReader(new FileStream(megFilePath, FileMode.Open)))
             {
-                byte[] containedFilesBytes = new byte[sizeof(uint)];
-                reader.Read(containedFilesBytes, 0, sizeof(uint));
-                uint containedFiles = BitConverter.ToUInt32(containedFilesBytes, 0);
+                uint containedFiles = reader.ReadUInt32();
                 uint currentOffset = sizeof(uint) * 2;
                 for (uint i = 0; i < containedFiles; i++)
                 {
                     reader.BaseStream.Seek(currentOffset, SeekOrigin.Begin);
                     ushort fileNameLenght = reader.ReadUInt16();
-                    currentOffset = currentOffset + Convert.ToUInt32(sizeof(ushort) + fileNameLenght * sizeof(char));
+                    currentOffset += Convert.ToUInt32(sizeof(ushort) + fileNameLenght);
                 }
 
-                headerSize = headerSize + currentOffset;
+                headerSize += currentOffset;
+
+                uint megContentTableRecordSize = new MegFileContentTableRecord(0, 0, 0, 0, 0).Size();
+                headerSize += megContentTableRecordSize * containedFiles;
             }
-            
+
             return headerSize;
         }
     }

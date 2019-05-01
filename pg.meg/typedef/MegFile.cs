@@ -28,5 +28,8 @@ namespace pg.meg.typedef
             b.AddRange(_megFileContentTable.GetBytes());
             return b.ToArray();
         }
+
+        public MegFileContentTable ContentTable => _megFileContentTable ?? new MegFileContentTable(new List<MegFileContentTableRecord>());
+        public MegFileNameTable FileNameTable => _fileNameTable ?? new MegFileNameTable(new List<MegFileNameTableRecord>());
     }
 }
