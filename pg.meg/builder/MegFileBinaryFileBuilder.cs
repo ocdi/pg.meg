@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using pg.meg.builder.attributes;
@@ -32,7 +33,10 @@ namespace pg.meg.builder
 
         public MegFile Build(MegFileAttribute attribute)
         {
-            throw new NotImplementedException();
+            uint numFiles = Convert.ToUInt32(attribute.ContentFiles.Count());
+            MegHeader megHeader = new MegHeader(numFiles, numFiles);
+            
+            return new MegFile(megHeader, null, null);
         }
 
         private MegHeader BuildMegHeader(byte[] megFileBytes)
