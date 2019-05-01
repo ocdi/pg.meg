@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using pg.meg.builder.attributes;
 using pg.meg.exceptions;
 using pg.meg.typedef;
+using pg.meg.utility;
+using pg.util;
 using pg.util.interfaces;
 [assembly: InternalsVisibleTo("pg.meg.test")]
 
@@ -33,12 +36,45 @@ namespace pg.meg.builder
 
         public MegFile Build(MegFileAttribute attribute)
         {
-            uint numFiles = Convert.ToUInt32(attribute.ContentFiles.Count());
-            MegHeader megHeader = new MegHeader(numFiles, numFiles);
-            
-            return new MegFile(megHeader, null, null);
+            MegHeader megHeader = BuildMegHeader(attribute);
+            MegFileNameTable megFileNameTable = BuildFileNameTable(attribute);
+            uint currentFileSize = megHeader.Size() + megFileNameTable.Size();
+            MegFileContentTable megFileContentTable = BuildFileContentTable(attribute, megFileNameTable, currentFileSize);
+
+            MegFile megFile = new MegFile(megHeader, megFileNameTable, megFileContentTable) {Files = attribute.ContentFiles.ToList()};
+
+            return megFile;
         }
 
+        private MegFileContentTable BuildFileContentTable(MegFileAttribute attribute, MegFileNameTable megFileNameTable, uint currentFileSize)
+        {
+            uint totalFileHeaderSize = currentFileSize + Convert.ToUInt32(attribute.ContentFiles.Count() * new MegFileContentTableRecord(0, 0, 0, 0, 0).Size());
+            List<MegFileContentTableRecord> megFileContentTable = new List<MegFileContentTableRecord>();
+            List<string> files = attribute.ContentFiles.ToList();
+            for (int i = 0; i < attribute.ContentFiles.Count(); i++)
+            {
+                uint crc32 = ChecksumUtility.GetChecksum(megFileNameTable.MegFileNameTableRecords[i].FileName);
+                uint fileTableRecordIndex = Convert.ToUInt32(i);
+                FileInfo fileInfo = new FileInfo(files[i]);
+                uint fileSizeInBytes = Convert.ToUInt32(fileInfo.Length);
+                
+                uint fileNameTableIndex = Convert.ToUInt32(i);
+                
+                MegFileContentTableRecord megFileContentTableRecord = new MegFileContentTableRecord(crc32, fileTableRecordIndex, fileSizeInBytes, totalFileHeaderSize, fileNameTableIndex);
+                totalFileHeaderSize += fileSizeInBytes;
+                
+                megFileContentTable.Add(megFileContentTableRecord);
+            }
+            
+            return new MegFileContentTable(megFileContentTable);
+        }
+
+        private static MegHeader BuildMegHeader(MegFileAttribute attribute)
+        {
+            uint numFiles = Convert.ToUInt32(attribute.ContentFiles.Count());
+            return new MegHeader(numFiles, numFiles);
+        }
+        
         private MegHeader BuildMegHeader(byte[] megFileBytes)
         {
             uint numFileNames = BitConverter.ToUInt32(megFileBytes, HEADER_STARTING_OFFSET);
@@ -64,6 +100,28 @@ namespace pg.meg.builder
                 table.Add(new MegFileNameTableRecord(fileName));
             }
             return new MegFileNameTable(table);
+        }
+
+        private static MegFileNameTable BuildFileNameTable(MegFileAttribute megFileBytes)
+        {
+            List<string> actualFiles = new List<string>();
+            List<MegFileNameTableRecord> megFileNameList = new List<MegFileNameTableRecord>();
+            foreach (string file in megFileBytes.ContentFiles)
+            {
+                try
+                {
+                    string fileName = MegFileContentUtility.ExtractFileNameForMegFile(file);
+                    MegFileNameTableRecord megFileNameTableRecord = new MegFileNameTableRecord(fileName);
+                    megFileNameList.Add(megFileNameTableRecord);
+                    actualFiles.Add(file);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"File {file} is invalid. {e}");
+                }
+            }
+            megFileBytes.ContentFiles = actualFiles;
+            return new MegFileNameTable(megFileNameList);
         }
 
         private MegFileContentTable BuildFileContentTable(byte[] megFileBytes)

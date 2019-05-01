@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("pg.meg.test")]
 
 namespace pg.meg
 {
@@ -28,6 +32,38 @@ namespace pg.meg
         public static void UnpackMegFile(string megFilePath, string targetDirectory)
         {
             throw new NotImplementedException();
+        }
+
+        internal static uint GetContainedFileCount(string megFilePath)
+        {
+            byte[] test = new byte[sizeof(uint)];
+            using (BinaryReader reader = new BinaryReader(new FileStream(megFilePath, FileMode.Open)))
+            {
+                reader.Read(test, 0, sizeof(uint));
+            }
+            return BitConverter.ToUInt32(test, 0);
+        }
+
+        internal static uint GetMegFileHeaderSize(string megFilePath)
+        {
+            uint headerSize = 0;
+            using (BinaryReader reader = new BinaryReader(new FileStream(megFilePath, FileMode.Open)))
+            {
+                byte[] containedFilesBytes = new byte[sizeof(uint)];
+                reader.Read(containedFilesBytes, 0, sizeof(uint));
+                uint containedFiles = BitConverter.ToUInt32(containedFilesBytes, 0);
+                uint currentOffset = sizeof(uint) * 2;
+                for (uint i = 0; i < containedFiles; i++)
+                {
+                    reader.BaseStream.Seek(currentOffset, SeekOrigin.Begin);
+                    ushort fileNameLenght = reader.ReadUInt16();
+                    currentOffset = currentOffset + Convert.ToUInt32(sizeof(ushort) + fileNameLenght * sizeof(char));
+                }
+
+                headerSize = headerSize + currentOffset;
+            }
+            
+            return headerSize;
         }
     }
 }

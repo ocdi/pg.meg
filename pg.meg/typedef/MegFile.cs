@@ -10,6 +10,8 @@ namespace pg.meg.typedef
         private readonly MegHeader _header;
         private readonly MegFileNameTable _fileNameTable;
         private readonly MegFileContentTable _megFileContentTable;
+        
+        internal List<string> Files { get; set; }
 
         internal MegFile(MegHeader header, MegFileNameTable fileNameTable, MegFileContentTable megFileContentTable)
         {

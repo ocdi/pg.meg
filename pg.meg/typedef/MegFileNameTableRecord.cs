@@ -7,7 +7,7 @@ using pg.util.interfaces;
 
 namespace pg.meg.typedef
 {
-    internal sealed class MegFileNameTableRecord : IBinaryFile
+    internal sealed class MegFileNameTableRecord : IBinaryFile, ISizeable
     {
         private readonly ushort _fileNameLength;
         private readonly string _fileName;
@@ -36,6 +36,11 @@ namespace pg.meg.typedef
             b.AddRange(BitConverter.GetBytes(_fileNameLength));
             b.AddRange(Encoding.ASCII.GetBytes(_fileName));
             return b.ToArray();
+        }
+
+        public uint Size()
+        {
+            return Convert.ToUInt32(GetBytes().Length);
         }
     }
 }

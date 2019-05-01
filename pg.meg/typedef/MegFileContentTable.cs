@@ -5,7 +5,7 @@ using pg.util.interfaces;
 
 namespace pg.meg.typedef
 {
-    internal sealed class MegFileContentTable : IBinaryFile
+    internal sealed class MegFileContentTable : IBinaryFile, ISizeable
     {
         private readonly List<MegFileContentTableRecord> _megFileContentTableRecords;
         
@@ -24,6 +24,16 @@ namespace pg.meg.typedef
                 b.AddRange(megFileContentTableRecord.GetBytes());
             }
             return b.ToArray();
+        }
+
+        public uint Size()
+        {
+            uint size = 0;
+            foreach (MegFileContentTableRecord megFileContentTableRecord in _megFileContentTableRecords)
+            {
+                size = size + megFileContentTableRecord.Size();
+            }
+            return size;
         }
     }
 }

@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using pg.util.interfaces;
-[assembly: InternalsVisibleTo("pg.meg.test")]
 
 namespace pg.meg.builder.attributes
 {
-    public sealed class MegFileAttribute : IBuilderAttribute
+    internal sealed class MegFileAttribute : IBuilderAttribute
     {
         private IEnumerable<string> _contentFiles;
         public string FileName { get; set; }
