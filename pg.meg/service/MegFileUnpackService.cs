@@ -22,7 +22,7 @@ namespace pg.meg.service
 
             if (!targetDirectoryExists)
             {
-                throw new ArgumentException($"The directory {targetDirectory} could not be found or created. The provided path is invalid."); 
+                throw new ArgumentException($"The directory {targetDirectory} could not be found or created. The provided path is invalid.");
             }
 
             MegFile megFile = LoadMegFileFromDisk(megFilePath);
@@ -39,7 +39,7 @@ namespace pg.meg.service
         private static void UnpackFile(string targetDirectory, MegFileContentTableRecord megFileContentTableRecord, MegFile megFile, BinaryReader reader)
         {
             byte[] file = new byte[megFileContentTableRecord.FileSizeInBytes];
-            string fileName = megFile.FileNameTable.MegFileNameTableRecords[Convert.ToInt32(megFileContentTableRecord.FileTableRecordIndex)].FileName;
+            string fileName = megFile.FileNameTable.MegFileNameTableRecords[Convert.ToInt32(megFileContentTableRecord.FileNameTableRecordIndex)].FileName;
             reader.BaseStream.Seek(Convert.ToInt32(megFileContentTableRecord.FileStartOffsetInBytes), SeekOrigin.Begin);
             reader.Read(file, 0, file.Length);
             string path = Path.Combine(targetDirectory, fileName);

@@ -27,6 +27,7 @@ namespace pg.meg.typedef
         public uint FileSizeInBytes => _fileSizeInBytes;
 
         public uint FileTableRecordIndex => _fileTableRecordIndex;
+        public uint FileNameTableRecordIndex => _fileNameTableIndex;
 
         public byte[] GetBytes()
         {

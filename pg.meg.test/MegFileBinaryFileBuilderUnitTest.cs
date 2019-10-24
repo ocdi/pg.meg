@@ -8,8 +8,7 @@ namespace pg.meg.test
     [TestClass]
     public class MegFileBinaryFileBuilderUnitTest
     {
-        private static string TEST_DATA_PATH_IN = "I:\\Workspace\\pg.meg\\pg.meg.test\\test_data\\yvaw_metafiles.meg";
-        private static string TEST_DATA_PATH_OUT = "I:\\Workspace\\pg.meg\\pg.meg.test\\test_data\\yvaw_metafiles.txt";
+        private static readonly string TEST_DATA_PATH_IN = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\", "test_data\\eaw_patch_2.meg"));
 
         [TestMethod]
         public void MegBuilderBuildHeaderTest()
