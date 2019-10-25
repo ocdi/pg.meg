@@ -10,7 +10,7 @@ namespace pg.meg.typedef
         private readonly MegHeader _header;
         private readonly MegFileNameTable _fileNameTable;
         private readonly MegFileContentTable _megFileContentTable;
-        
+
         internal List<string> Files { get; set; }
 
         internal MegFile(MegHeader header, MegFileNameTable fileNameTable, MegFileContentTable megFileContentTable)
@@ -31,5 +31,10 @@ namespace pg.meg.typedef
 
         public MegFileContentTable ContentTable => _megFileContentTable ?? new MegFileContentTable(new List<MegFileContentTableRecord>());
         public MegFileNameTable FileNameTable => _fileNameTable ?? new MegFileNameTable(new List<MegFileNameTableRecord>());
+
+        internal string LookupFileNameByIndex(int i)
+        {
+            return _fileNameTable.MegFileNameTableRecords[i].FileName;
+        }
     }
 }

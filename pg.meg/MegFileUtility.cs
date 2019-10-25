@@ -25,7 +25,7 @@ namespace pg.meg
         /// <param name="absoluteFilePaths">The absolute file paths to the files the meg file should include.</param>
         public static void PackMegFile(string fullyQualifiedMegFileSavePath, IEnumerable<string> absoluteFilePaths)
         {
-            throw new NotImplementedException();
+            MegFilePackService.PackMegFile(fullyQualifiedMegFileSavePath, absoluteFilePaths);
         }
 
         /// <summary>Unpacks the contents of a specified meg file into a given directory.</summary>
