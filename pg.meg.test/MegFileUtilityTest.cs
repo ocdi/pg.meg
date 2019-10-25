@@ -7,8 +7,8 @@ namespace pg.meg.test
     [TestClass]
     public class MegFileUtilityTest
     {
-        private static readonly string TEST_DATA_PATH_IN =
-            Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\", "test_data\\eaw_patch_2.meg"));
+        private static readonly string TEST_DATA_PATH_IN = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\", "test_data\\eaw_patch_2.meg"));
+        private static readonly string TEST_DATA_PATH_BUILD = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\", "test_data\\eaw_patch_build.meg"));
 
         private static readonly string TEST_DATA_PATH_OUT =
             Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\", "test_data\\unpacked"));
@@ -46,8 +46,6 @@ namespace pg.meg.test
             Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\",
                 "test_data\\unpacked\\DATA\\XML\\SPACEUNITSFRIGATES.XML")),
             Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\",
-                "test_data\\unpacked\\DATA\\XML\\SPACEUNITSFRIGATES.XML")),
-            Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\",
                 "test_data\\unpacked\\DATA\\XML\\SQUADRONS.XML"))
         };
 
@@ -57,6 +55,11 @@ namespace pg.meg.test
             if (Directory.Exists(TEST_DATA_PATH_OUT))
             {
                 Directory.Delete(TEST_DATA_PATH_OUT, true);
+            }
+
+            if (File.Exists(TEST_DATA_PATH_BUILD))
+            {
+                File.Delete(TEST_DATA_PATH_BUILD);
             }
         }
 
@@ -71,6 +74,25 @@ namespace pg.meg.test
         public void UnpackMegFile_TestSuccess()
         {
             MegFileUtility.UnpackMegFile(TEST_DATA_PATH_IN, TEST_DATA_PATH_OUT);
+            Assert.IsTrue(Directory.Exists(TEST_DATA_PATH_OUT));
+            Assert.IsNotNull(Directory.GetFiles(TEST_DATA_PATH_OUT));
+            foreach (string file in EXPECTED_FILES)
+            {
+                Assert.IsTrue(File.Exists(file));
+            }
+        }
+
+        [TestMethod]
+        public void PackMegFile_TestSuccess()
+        {
+            MegFileUtility.UnpackMegFile(TEST_DATA_PATH_IN, TEST_DATA_PATH_OUT);
+            MegFileUtility.PackMegFile(TEST_DATA_PATH_BUILD, EXPECTED_FILES);
+            Assert.IsTrue(File.Exists(TEST_DATA_PATH_BUILD));
+            if (Directory.Exists(TEST_DATA_PATH_OUT))
+            {
+                Directory.Delete(TEST_DATA_PATH_OUT, true);
+            }
+            MegFileUtility.UnpackMegFile(TEST_DATA_PATH_BUILD, TEST_DATA_PATH_OUT);
             Assert.IsTrue(Directory.Exists(TEST_DATA_PATH_OUT));
             Assert.IsNotNull(Directory.GetFiles(TEST_DATA_PATH_OUT));
             foreach (string file in EXPECTED_FILES)

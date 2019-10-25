@@ -2,10 +2,29 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>pg.meg</Title>
+    <Authors>Lukas Grünwald</Authors>
+    <Description>Implements the Petroglyph v1.0 meg archive file type in C#.
+
+Special thanks to Mike Lankamp for decoding the files and hosting them on Petrolution.
+
+Mega Files (extension: .MEG) in Petroglyph's games are used to store the collection of game files.
+By packing these files into a single large file, the operating-system overhead of storing and opening each individual file is removed and it helps avoid memory fragmentation.</Description>
+    <Copyright>2019 - Lukas Grünwald</Copyright>
+    <PackageProjectUrl>https://github.com/KadVenku/pg.meg</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/KadVenku/pg.meg/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/KadVenku/pg.meg</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>petroglyph, alamo, glyphx</PackageTags>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\pg.utils\pg.util\pg.util.csproj" />
+    <PackageReference Include="pg.util" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
