@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using pg.meg.service;
 
 namespace pg.meg.test
 {
@@ -123,6 +124,13 @@ namespace pg.meg.test
         public void GetContainedFilesCount_Test()
         {
             Assert.AreEqual(16u, MegFileUtility.GetContainedFileCount(TEST_DATA_PATH_IN));
+        }
+
+        [TestMethod]
+        public void CNCGetContainedFilesCount_Test()
+        {
+            var megFile = MegFileUnpackService.LoadMegFileFromDisk(@"D:\SteamLibrary\steamapps\common\CnCRemastered\Data\MUSIC.MEG");
+            Assert.AreEqual(203, megFile.FileNameTable.MegFileNameTableRecords.Count);
         }
     }
 }

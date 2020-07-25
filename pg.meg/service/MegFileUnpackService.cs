@@ -50,7 +50,7 @@ namespace pg.meg.service
             }
         }
 
-        private static MegFile LoadMegFileFromDisk(string megFilePath)
+        public static MegFile LoadMegFileFromDisk(string megFilePath)
         {
             uint headerSize = MegFileUtility.GetMegFileHeaderSize(megFilePath);
             byte[] megFileHeader = new byte[headerSize];

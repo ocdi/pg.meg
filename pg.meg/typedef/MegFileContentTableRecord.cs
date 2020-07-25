@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using pg.util.interfaces;
 
@@ -8,13 +9,13 @@ using pg.util.interfaces;
 
 namespace pg.meg.typedef
 {
-    internal sealed class MegFileContentTableRecord : IBinaryFile, ISizeable, IComparable
+    internal class MegFileContentTableRecord : IBinaryFile, ISizeable, IComparable
     {
-        private readonly uint _crc32;
-        private uint _fileTableRecordIndex;
-        private readonly uint _fileSizeInBytes;
-        private uint _fileStartOffsetInBytes;
-        private readonly uint _fileNameTableIndex;
+        protected readonly uint _crc32;
+        protected uint _fileTableRecordIndex;
+        protected readonly uint _fileSizeInBytes;
+        protected uint _fileStartOffsetInBytes;
+        protected readonly uint _fileNameTableIndex;
 
         public MegFileContentTableRecord(uint crc32, uint fileTableRecordIndex, uint fileSizeInBytes,
             uint fileStartOffsetInBytes, uint fileNameTableIndex)
@@ -42,7 +43,7 @@ namespace pg.meg.typedef
 
         public uint FileNameTableRecordIndex => _fileNameTableIndex;
 
-        public byte[] GetBytes()
+        public virtual byte[] GetBytes()
         {
             List<byte> b = new List<byte>();
             b.AddRange(BitConverter.GetBytes(_crc32));
@@ -53,7 +54,7 @@ namespace pg.meg.typedef
             return b.ToArray();
         }
 
-        public uint Size()
+        public virtual uint Size()
         {
             return sizeof(uint) * 5;
         }
@@ -100,6 +101,36 @@ namespace pg.meg.typedef
             }
 
             return 0;
+        }
+    }
+
+
+    internal sealed class MegFileContentTableRecordV3 : MegFileContentTableRecord
+    {
+        private readonly ushort _flags;
+
+        public MegFileContentTableRecordV3(ushort flags, uint crc32, uint fileTableRecordIndex, uint fileSizeInBytes,
+            uint fileStartOffsetInBytes, ushort fileNameTableIndex) : base(crc32, fileNameTableIndex, fileSizeInBytes, fileStartOffsetInBytes, fileNameTableIndex)
+        {
+            _flags = flags;
+        }
+
+        public override byte[] GetBytes()
+        {
+            List<byte> b = new List<byte>();
+            b.AddRange(BitConverter.GetBytes(_flags));
+            b.AddRange(BitConverter.GetBytes(_crc32));
+            b.AddRange(BitConverter.GetBytes(_fileTableRecordIndex));
+            b.AddRange(BitConverter.GetBytes(_fileSizeInBytes));
+            b.AddRange(BitConverter.GetBytes(_fileStartOffsetInBytes));
+            b.AddRange(BitConverter.GetBytes(_fileNameTableIndex));
+            //b.AddRange(Enumerable.Repeat((byte)0, 14)); // 14 bytes of padding
+            return b.ToArray();
+        }
+
+        public override uint Size()
+        {
+            return sizeof(uint) * 4 + sizeof(ushort) * 2;// + sizeof(byte) * 14;
         }
     }
 }

@@ -16,11 +16,17 @@ using pg.util.interfaces;
 
 namespace pg.meg.builder
 {
+
+    // there is a v2 but it is unsupported
+    internal enum MegFileVersion
+    {
+        V1,
+        V3
+    }
     internal sealed class MegFileBinaryFileBuilder : IBinaryFileBuilder<MegFile, MegFileAttribute>
     {
-        private const int HEADER_STARTING_OFFSET = 0;
-        private const int HEADER_NUMBER_OF_FILES_OFFSET = 4;
-        private const int FILE_NAME_TABLE_STARTING_OFFSET = 8;
+
+
         private int _currentOffset;
         private uint _numberOfFiles;
 
@@ -32,8 +38,8 @@ namespace pg.meg.builder
             }
 
             MegHeader header = BuildMegHeader(megFileBytes);
-            MegFileNameTable megFileNameTable = BuildFileNameTable(megFileBytes);
-            MegFileContentTable megFileContentTable = BuildFileContentTable(megFileBytes);
+            MegFileNameTable megFileNameTable = BuildFileNameTable(header, megFileBytes);
+            MegFileContentTable megFileContentTable = BuildFileContentTable(header, megFileBytes);
             return new MegFile(header, megFileNameTable, megFileContentTable);
         }
 
@@ -59,8 +65,32 @@ namespace pg.meg.builder
 
         private MegHeader BuildMegHeader(byte[] megFileBytes)
         {
-            uint numFileNames = BitConverter.ToUInt32(megFileBytes, HEADER_STARTING_OFFSET);
-            uint numFiles = BitConverter.ToUInt32(megFileBytes, HEADER_NUMBER_OF_FILES_OFFSET);
+            uint numFileNames = BitConverter.ToUInt32(megFileBytes, MegHeader.HEADER_STARTING_OFFSET);
+            uint numFiles = BitConverter.ToUInt32(megFileBytes, MegHeader.HEADER_NUMBER_OF_FILES_OFFSET);
+            var version = MegFileVersion.V1;
+            var fileNameTableOffset = MegHeader.FILE_NAME_TABLE_STARTING_OFFSET;
+            
+
+            if (numFileNames == MegFileUtility.FORMAT_V3_ENCRYPTED)
+            {
+                throw new MegFileMalformedException("Encrypted V3 files are unsupported");
+            }
+            if (numFileNames == MegFileUtility.FORMAT_V2_OR_V3)
+            {
+                if (numFiles != MegFileUtility.FORMAT_ID2) throw new MegFileMalformedException("File identification header bytes are incorrect");
+
+                numFileNames = BitConverter.ToUInt32(megFileBytes, MegHeader.HEADER_NUMBER_OF_FILE_NAMES_OFFSET_V3);
+                numFiles = BitConverter.ToUInt32(megFileBytes, MegHeader.HEADER_NUMBER_OF_FILES_OFFSET_V3);
+                fileNameTableOffset = MegHeader.FILE_NAME_TABLE_STARTING_OFFSET_V3;
+
+                // todo: do we need this?
+                var fileTableOffset = (int)BitConverter.ToUInt32(megFileBytes, MegHeader.HEADER_FILE_TABLE_SIZE_OFFSET_V3) 
+                    + MegHeader.FILE_NAME_TABLE_STARTING_OFFSET_V3; // the main header is 0x18 in size
+                version = MegFileVersion.V3;
+            }
+
+            // according to https://modtools.petrolution.net/docs/MegFileFormat
+            // this isn't true
             if (numFiles != numFileNames)
             {
                 throw new MegFileMalformedException(
@@ -68,13 +98,13 @@ namespace pg.meg.builder
             }
 
             _numberOfFiles = numFiles;
-            return new MegHeader(numFileNames, numFiles);
+            return new MegHeader(numFileNames, numFiles, version, fileNameTableOffset);
         }
 
-        private MegFileNameTable BuildFileNameTable(byte[] megFileBytes)
+        private MegFileNameTable BuildFileNameTable(MegHeader header, byte[] megFileBytes)
         {
             List<MegFileNameTableRecord> table = new List<MegFileNameTableRecord>();
-            _currentOffset = FILE_NAME_TABLE_STARTING_OFFSET;
+            _currentOffset = header._fileTableOffset;
             for (uint i = 0; i < _numberOfFiles; i++)
             {
                 ushort fileNameLength = BitConverter.ToUInt16(megFileBytes, _currentOffset);
@@ -110,12 +140,22 @@ namespace pg.meg.builder
             return new MegFileNameTable(megFileNameList);
         }
 
-        private MegFileContentTable BuildFileContentTable(byte[] megFileBytes)
+        private MegFileContentTable BuildFileContentTable(MegHeader header, byte[] megFileBytes)
         {
             List<MegFileContentTableRecord> megFileContentTableRecords = new List<MegFileContentTableRecord>();
 
+            var isV3 = header._fileVersion == MegFileVersion.V3;
+
             for (uint i = 0; i < _numberOfFiles; i++)
             {
+                
+                if (isV3)
+                {
+                    ushort flags = BitConverter.ToUInt16(megFileBytes, _currentOffset);
+                    if (flags != 0) throw new MegFileMalformedException($"Encrypted files are not supported. The file at index {i} was marked as encrypted.");
+                    _currentOffset += sizeof(ushort);
+                }
+
                 uint crc32 = BitConverter.ToUInt32(megFileBytes, _currentOffset);
                 _currentOffset += sizeof(uint);
                 uint fileTableRecordIndex = BitConverter.ToUInt32(megFileBytes, _currentOffset);
@@ -124,8 +164,15 @@ namespace pg.meg.builder
                 _currentOffset += sizeof(uint);
                 uint fileStartOffsetInBytes = BitConverter.ToUInt32(megFileBytes, _currentOffset);
                 _currentOffset += sizeof(uint);
-                uint fileNameTableIndex = BitConverter.ToUInt32(megFileBytes, _currentOffset);
-                _currentOffset += sizeof(uint);
+                
+                uint fileNameTableIndex = isV3 
+                    ? BitConverter.ToUInt16(megFileBytes, _currentOffset) // v3 uses smaller index size
+                    : BitConverter.ToUInt32(megFileBytes, _currentOffset);
+
+                _currentOffset += isV3 
+                    ? sizeof(ushort) 
+                    : sizeof(uint);
+
                 megFileContentTableRecords.Add(new MegFileContentTableRecord(
                     crc32,
                     fileTableRecordIndex,
